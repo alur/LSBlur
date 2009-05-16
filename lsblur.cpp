@@ -95,15 +95,38 @@ bool CreateMessageHandlers(HINSTANCE hInst)
 //
 CBitmapEx* GetWallpaper()
 {
-	char sz_WallpaperPath[MAX_LINE_LENGTH] = { 0 };
-	DWORD dwSize = MAX_LINE_LENGTH, dwType = REG_SZ;
-	SHGetValue(HKEY_CURRENT_USER, "Control Panel\\Desktop", "Wallpaper", &dwType, &sz_WallpaperPath, &dwSize);
+	// Get the path to the wallpaper
+	char szWallpaperPath[MAX_LINE_LENGTH] = { 0 };
+	DWORD dwSize = sizeof(szWallpaperPath), dwType = REG_SZ;
+	SHGetValue(HKEY_CURRENT_USER, "Control Panel\\Desktop", "Wallpaper", &dwType, &szWallpaperPath, &dwSize);
 
+	// Get whether or not to tile the wallpaper
+	char szTemp[32];
+	dwSize = sizeof(szTemp);
+	SHGetValue(HKEY_CURRENT_USER, "Control Panel\\Desktop", "TileWallpaper", &dwType, &szTemp, &dwSize);
+	bool TileWallpaper = atoi(szTemp) ? true : false;
+
+	// Get whether or not to stretch the wallpaper
+	SHGetValue(HKEY_CURRENT_USER, "Control Panel\\Desktop", "WallpaperStyle", &dwType, &szTemp, &dwSize);
+	bool StretchWallpaper = (atoi(szTemp) == 2) ? true : false;
+
+	// Load the wallpaper
 	CBitmapEx* bmpWallpaper = new CBitmapEx();
-	bmpWallpaper->Load(sz_WallpaperPath);
+	bmpWallpaper->Load(szWallpaperPath);
 
 	// TODO::Support center & tiling
-	bmpWallpaper->Scale2(GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
+	if (bStretchWallpaper) // Stretch
+	{
+		bmpWallpaper->Scale2(GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
+	}
+	else if (bTileWallpaper) // Tile
+	{
+	
+	}
+	else // Center
+	{
+		
+	}
 
 	return bmpWallpaper;
 }
