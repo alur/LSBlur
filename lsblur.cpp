@@ -101,7 +101,9 @@ CBitmapEx* GetWallpaper()
 
 	CBitmapEx* bmpWallpaper = new CBitmapEx();
 	bmpWallpaper->Load(sz_WallpaperPath);
-	bmpWallpaper->Scale2(1920, 1200);
+
+	// TODO::Support center & tiling
+	bmpWallpaper->Scale2(GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
 
 	return bmpWallpaper;
 }
@@ -119,16 +121,11 @@ void ReadConfig()
 	}
 
 	char szLine[MAX_LINE_LENGTH];
-	BlurArea* pBlurArea;
 	CBitmapEx* bmpWallpaper = GetWallpaper();
 
 	while (LCReadNextConfig(f, "*Blur", szLine, sizeof(szLine)))
 	{
-		pBlurArea = ParseBlurLine(szLine, bmpWallpaper);
-		if (pBlurArea != NULL)
-		{
-
-		}
+		ParseBlurLine(szLine, bmpWallpaper);
 	}
 
 	delete bmpWallpaper;
@@ -140,13 +137,14 @@ void ReadConfig()
 //
 // ParseBlurLine
 //
-BlurArea* ParseBlurLine(const char* szLine, CBitmapEx* bmpWallpaper)
+// Returns true on success
+//
+bool ParseBlurLine(const char* szLine, CBitmapEx* bmpWallpaper)
 {
 	LPCSTR pszNext = szLine;
-	char szToken[MAX_LINE_LENGTH];
-	char szName[MAX_BANGCOMMAND];
+	char szToken[MAX_LINE_LENGTH], szName[MAX_BANGCOMMAND];
 	int X, Y, Width, Height, Itterations;
-	BlurArea* blurReturn = NULL;
+	bool bReturn = false;
 
 	if (szLine != NULL)
 	{
@@ -154,28 +152,42 @@ BlurArea* ParseBlurLine(const char* szLine, CBitmapEx* bmpWallpaper)
 		{
 			// *Blur/!Blur Name X Y Width Height Repetitions
 
+			// Get the name
 			GetToken(pszNext, szToken, &pszNext, false);
 			memcpy(szName, szToken, sizeof(szName));
 
+			// Look for the name in the BlurMap
+			BlurMap::iterator iter = ::g_BlurMap.find(szName);
+			if (iter != g_BlurMap.end())
+			{
+				return false; // The BlurArea already exists
+			}
+
+			// Get the X position
 			GetToken(pszNext, szToken, &pszNext, false);
 			X = atoi(szToken);
 
-			GetToken(pszNext, szToken, &pszNext, false);
-			X = atoi(szToken);
-
+			// Get the Y positions
 			GetToken(pszNext, szToken, &pszNext, false);
 			Y = atoi(szToken);
 
+			// Get the width
 			GetToken(pszNext, szToken, &pszNext, false);
 			Width = atoi(szToken);
 
+			// Get the height
 			GetToken(pszNext, szToken, &pszNext, false);
 			Height = atoi(szToken);
 
+			// Get the number of iterations
 			GetToken(pszNext, szToken, &pszNext, false);
 			Itterations = atoi(szToken);
 
-			blurReturn = new BlurArea(X, Y, Width, Height, bmpWallpaper, szName, Itterations);
+			// Create the blurarea and insert it into the BlurMap
+			BlurArea* blur = new BlurArea(X, Y, Width, Height, bmpWallpaper, szName, Itterations);
+			g_BlurMap.insert(BlurMap::value_type(szName, blur));
+
+			bReturn = true; // Everything went well
 		}
 		catch (...)
 		{
@@ -184,7 +196,7 @@ BlurArea* ParseBlurLine(const char* szLine, CBitmapEx* bmpWallpaper)
 		}
 	}
 
-	return blurReturn;
+	return bReturn;
 }
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

@@ -38,7 +38,7 @@ LRESULT WINAPI MessageHandlerProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 LRESULT WINAPI BlurHandlerProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void AddBlur(RECT rRect);
 void Experimenting();
-BlurArea* ParseBlurLine(const char* szLine, CBitmapEx* bmpWallpaper);
+bool ParseBlurLine(const char* szLine, CBitmapEx* bmpWallpaper);
 CBitmapEx* GetWallpaper();
 
 // Variables
