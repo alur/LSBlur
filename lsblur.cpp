@@ -155,7 +155,7 @@ BlurArea* ParseBlurLine(const char* szLine, CBitmapEx* bmpWallpaper)
 			// *Blur/!Blur Name X Y Width Height Repetitions
 
 			GetToken(pszNext, szToken, &pszNext, false);
-			memcpy(szToken, szName, sizeof(szName));
+			memcpy(szName, szToken, sizeof(szName));
 
 			GetToken(pszNext, szToken, &pszNext, false);
 			X = atoi(szToken);
