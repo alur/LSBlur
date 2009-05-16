@@ -60,6 +60,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalOptions="/ignore:4254"
 				AdditionalDependencies="lsapi.lib shlwapi.lib"
 				OutputFile="C:\SYSTEM\LiteStep\debug\modules\lsblur.dll"
 				LinkIncremental="2"
@@ -137,7 +138,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="lsapi.lib"
+				AdditionalOptions="/ignore:4254"
+				AdditionalDependencies="lsapi.lib shlwapi.lib"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				SubSystem="2"
