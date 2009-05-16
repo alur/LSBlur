@@ -10,6 +10,8 @@
 #include <stdlib.h>
 #include <math.h>
 
+// Disable C4189 : local variable is initialized but not referenced
+#pragma warning(disable: 4189)
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -167,7 +169,8 @@ void CBitmapEx::Load(LPTSTR lpszBitmapFile)
 	if (lpszBitmapFile != NULL)
 	{
 		// Open .BMP file
-		FILE* file = _tfopen(lpszBitmapFile, _T("rb"));
+		FILE* file;
+		_tfopen_s(&file, lpszBitmapFile, _T("rb"));
 		if (file != NULL)
 		{
 			// Deinit members
@@ -323,7 +326,8 @@ void CBitmapEx::Save(LPTSTR lpszBitmapFile)
 		_ConvertTo24Bpp();
 
 		// Open .BMP file
-		FILE* file = _tfopen(lpszBitmapFile, _T("wb"));
+		FILE* file;
+		_tfopen_s(&file, lpszBitmapFile, _T("wb"));
 		if (file != NULL)
 		{
 			// Write BITMAPFILEHEADER info
@@ -473,9 +477,9 @@ void CBitmapEx::_ConvertTo32Bpp()
 					case 16:
 						{
 							LPWORD lpSrcData = (LPWORD)m_lpData;
-							BYTE red = (lpSrcData[dwSrcTotalOffset>>1] & 0x7C00) >> 10;
-							BYTE green = (lpSrcData[dwSrcTotalOffset>>1] & 0x03E0) >> 5;
-							BYTE blue = lpSrcData[dwSrcTotalOffset>>1] & 0x001F;
+							BYTE red = (BYTE)((lpSrcData[dwSrcTotalOffset>>1] & 0x7C00) >> 10);
+							BYTE green = (BYTE)((lpSrcData[dwSrcTotalOffset>>1] & 0x03E0) >> 5);
+							BYTE blue = (BYTE)(lpSrcData[dwSrcTotalOffset>>1] & 0x001F);
 							lpDstData[dwDstTotalOffset>>2] = _RGB(red, green, blue);
 						}
 						break;
@@ -11608,7 +11612,7 @@ void CBitmapEx::DrawCombined(long dstX, long dstY, long width, long height, CBit
 				// Update bitmap
 				_PIXEL pixelSrc = lpSrcData[dwSrcTotalOffset>>2];
 				_PIXEL pixelDst = lpDstData[dwDstTotalOffset>>2];
-				_PIXEL pixel;
+				_PIXEL pixel = 0;
 				if (mode == CM_SRC_AND_DST)
 					pixel = pixelSrc & pixelDst;
 				else if (mode == CM_SRC_OR_DST)
@@ -11722,7 +11726,7 @@ void CBitmapEx::_DrawCombinedNearestNeighbour(long dstX, long dstY, long dstWidt
 				dwSrcTotalOffset = (_height-_srcStartY-m-1)*_pitch + (n+_srcStartX)*_bpp;
 				_PIXEL pixelSrc = lpSrcData[dwSrcTotalOffset>>2];
 				_PIXEL pixelDst = lpDstData[dwDstTotalOffset>>2];
-				_PIXEL pixel;
+				_PIXEL pixel = 0;
 				if (mode == CM_SRC_AND_DST)
 					pixel = pixelSrc & pixelDst;
 				else if (mode == CM_SRC_OR_DST)
@@ -11866,7 +11870,7 @@ void CBitmapEx::_DrawCombinedBilinear(long dstX, long dstY, long dstWidth, long 
 				BYTE blue = (BYTE)fxtoi(Mulfx(f_w1, f_b1) + Mulfx(f_w2, f_b2) + Mulfx(f_w3, f_b3) + Mulfx(f_w4, f_b4));
 				_PIXEL pixelSrc = _RGB(red, green, blue);
 				_PIXEL pixelDst = lpDstData[dwDstTotalOffset>>2];
-				_PIXEL pixel;
+				_PIXEL pixel = 0;
 				if (mode == CM_SRC_AND_DST)
 					pixel = pixelSrc & pixelDst;
 				else if (mode == CM_SRC_OR_DST)

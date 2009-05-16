@@ -6,7 +6,7 @@
 //
 // DLL entry point
 //
-BOOL APIENTRY DllMain( HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
+BOOL APIENTRY DllMain( HANDLE hModule, DWORD ul_reason_for_call, LPVOID /* lpReserved */)
 {
 	if (ul_reason_for_call == DLL_PROCESS_ATTACH)
 	{
@@ -21,7 +21,7 @@ BOOL APIENTRY DllMain( HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 //
 // Module starting point
 //
-int initModuleEx(HWND hwndParent, HINSTANCE hDllInstance, LPCSTR szPath)
+int initModuleEx(HWND /* hwndParent */, HINSTANCE hDllInstance, LPCSTR /* szPath */)
 {
 	g_hInstance = hDllInstance;
 
