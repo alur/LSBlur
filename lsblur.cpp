@@ -28,6 +28,7 @@ int initModuleEx(HWND /* hwndParent */, HINSTANCE hDllInstance, LPCSTR /* szPath
 	// Store wallpaper in memory instead of generating a new copy whenever a !Blur line is executed
 	g_bStoreWallpaper = GetRCBool("BlurStoreWallpaper", false) ? true : false;
 
+	// Create window classes and the main window
 	if (!CreateMessageHandlers(hDllInstance))
 		return 1;
 
