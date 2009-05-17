@@ -31,9 +31,24 @@ int initModuleEx(HWND /* hwndParent */, HINSTANCE hDllInstance, LPCSTR /* szPath
 	if (!CreateMessageHandlers(hDllInstance))
 		return 1;
 
+	// Load *Blur lines
 	ReadConfig();
 
+	// Register for !Blur bangs
+	AddBangCommand("!Blur", BangBlur);
+
 	return 0; // Initialized succesfully
+}
+
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+//
+// BangBlur
+//
+void BangBlur(HWND, LPCSTR pszArgs)
+{
+	CBitmapEx* bmpWallpaper = GetWallpaper();
+	ParseBlurLine(pszArgs, bmpWallpaper);
+	delete bmpWallpaper;
 }
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -44,6 +59,19 @@ int initModuleEx(HWND /* hwndParent */, HINSTANCE hDllInstance, LPCSTR /* szPath
 //
 void quitModule(HINSTANCE hDllInstance)
 {
+	// Unregister the !Blur bang
+	RemoveBangCommand("!Blur");
+
+	// Delete all blur areas
+	for (BlurMap::iterator iter = g_BlurMap.begin(); iter != g_BlurMap.end(); ++iter)
+	{
+		delete iter->second;
+	}
+
+	// Erase the BlurMap
+	g_BlurMap.clear();
+
+	// Unregister window classes
 	UnregisterClass(g_szBlurHandler, hDllInstance);
 	UnregisterClass(g_szMsgHandler, hDllInstance);
 }
@@ -104,11 +132,11 @@ CBitmapEx* GetWallpaper()
 	char szTemp[32];
 	dwSize = sizeof(szTemp);
 	SHGetValue(HKEY_CURRENT_USER, "Control Panel\\Desktop", "TileWallpaper", &dwType, &szTemp, &dwSize);
-	bool TileWallpaper = atoi(szTemp) ? true : false;
+	bool bTileWallpaper = atoi(szTemp) ? true : false;
 
 	// Get whether or not to stretch the wallpaper
 	SHGetValue(HKEY_CURRENT_USER, "Control Panel\\Desktop", "WallpaperStyle", &dwType, &szTemp, &dwSize);
-	bool StretchWallpaper = (atoi(szTemp) == 2) ? true : false;
+	bool bStretchWallpaper = (atoi(szTemp) == 2) ? true : false;
 
 	// Load the wallpaper
 	CBitmapEx* bmpWallpaper = new CBitmapEx();

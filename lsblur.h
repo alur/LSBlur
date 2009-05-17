@@ -40,6 +40,7 @@ void AddBlur(RECT rRect);
 void Experimenting();
 bool ParseBlurLine(const char* szLine, CBitmapEx* bmpWallpaper);
 CBitmapEx* GetWallpaper();
+void BangBlur(HWND hWnd, LPCSTR pszArgs);
 
 // Variables
 HWND g_hwndMessageHandler;
