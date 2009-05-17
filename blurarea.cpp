@@ -22,8 +22,9 @@ BlurArea::BlurArea(UINT X, UINT Y, UINT Width, UINT Height, CBitmapEx* bmpWallpa
 	UpdateBackground(bmpWallpaper);
 
 	// Create Window
-	m_Window = CreateWindowEx(g_dwExStyle, g_szBlurHandler, szName, g_dwStyle, X, Y, Width, Height, NULL, NULL, g_hInstance, 0);
+	m_Window = CreateWindowEx(g_dwExStyle, g_szBlurHandler, szName, g_dwStyle, X, Y, Width, Height, g_hwndBlurHandler, NULL, g_hInstance, 0);
 	SetWindowLongPtr(m_Window, GWLP_USERDATA, (LONG)this);
+
 	SetWindowPos(m_Window, HWND_BOTTOM, 0,0,0,0, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE);
 }
 

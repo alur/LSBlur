@@ -1,17 +1,14 @@
 #pragma once
 
-#include "lsapi.h"
-#define WIN32_LEAN_AND_MEAN
-#include "windows.h"
-#define STRSAFE_NO_DEPRECATE
-#include <strsafe.h>
 #include <string>
 #include <map>
-#include "utility.h"
 #include <aggressiveoptimize.h>
 #include "blurarea.h"
+#include "utility.h"
+#include "shlwapi.h"
 
 class BlurArea;
+
 typedef std::map<std::string, BlurArea*, stringicmp> BlurMap;
 
 // Constants
@@ -20,7 +17,7 @@ const char g_szAppName[]		= "LSBlur";
 const char g_szMsgHandler[]		= "LSBlurManager";
 const char g_szBlurHandler[]	= "Blur";
 const char g_szAuthor[]			= "Alurcard2";
-const DWORD g_dwStyle			= WS_VISIBLE | WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
+const DWORD g_dwStyle			= WS_VISIBLE | WS_POPUP;
 const DWORD g_dwExStyle			= WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW;
 
 const int g_lsMessages[] = {LM_GETREVID, LM_REFRESH, 0};

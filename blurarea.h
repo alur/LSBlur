@@ -1,12 +1,10 @@
 #pragma once
 
 #define WIN32_LEAN_AND_MEAN
-#include "windows.h"
+#include "lsapi.h"
 #define STRSAFE_NO_DEPRECATE
 #include <strsafe.h>
 #include "BitmapEx.h"
-#include "lsapi.h"
-#include "shlwapi.h"
 
 class CBitmapEx;
 
@@ -14,6 +12,7 @@ extern HINSTANCE g_hInstance;
 extern const DWORD g_dwExStyle;
 extern const DWORD g_dwStyle;
 extern const char g_szBlurHandler[];
+extern HWND g_hwndBlurHandler;
 
 class BlurArea
 {

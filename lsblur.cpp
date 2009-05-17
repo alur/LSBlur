@@ -112,7 +112,7 @@ bool CreateMessageHandlers(HINSTANCE hInst)
 	if (!g_hwndMessageHandler)
 		return false; // Failed to create blur handler window
 
-	// Register with litestep to recive LM_ messages
+	// Register with LiteStep to receive LM_ messages
 	SendMessage(GetLitestepWnd(), LM_REGISTERMESSAGE, (WPARAM)g_hwndMessageHandler, (LPARAM)g_lsMessages);
 
 	return true;
@@ -172,12 +172,14 @@ void ReadConfig()
 		throw std::runtime_error("Error: Cannot open step.rc for reading");
 	}
 
-	char szLine[MAX_LINE_LENGTH];
+	char szLine[MAX_LINE_LENGTH], szBlur[MAX_BANGCOMMAND];
+	LPCSTR pszLine;
 	CBitmapEx* bmpWallpaper = GetWallpaper();
 
 	while (LCReadNextConfig(f, "*Blur", szLine, sizeof(szLine)))
 	{
-		ParseBlurLine(szLine, bmpWallpaper);
+		GetToken(szLine, szBlur, &pszLine, false); // Drop the *Blur
+		ParseBlurLine(pszLine, bmpWallpaper);
 	}
 
 	delete bmpWallpaper;
@@ -244,7 +246,6 @@ bool ParseBlurLine(const char* szLine, CBitmapEx* bmpWallpaper)
 		catch (...)
 		{
 			// TODO::Show error message
-			throw;
 		}
 	}
 

@@ -3,7 +3,6 @@
 
 #include <windows.h>
 
-
 // Preprocessor Definitions
 #define LSAPI EXTERN_C DECLSPEC_IMPORT
 
