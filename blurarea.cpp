@@ -34,6 +34,7 @@ BlurArea::BlurArea(UINT X, UINT Y, UINT Width, UINT Height, CBitmapEx* bmpWallpa
 //
 BlurArea::~BlurArea()
 {
+	DestroyWindow(m_Window);
 	delete m_BitMapHandler;
 }
 

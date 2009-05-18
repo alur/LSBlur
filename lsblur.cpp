@@ -72,6 +72,10 @@ void quitModule(HINSTANCE hDllInstance)
 	// Erase the BlurMap
 	g_BlurMap.clear();
 
+	// Destroy message handling windows
+	DestroyWindow(g_hwndMessageHandler);
+	DestroyWindow(g_hwndBlurHandler);
+
 	// Unregister window classes
 	UnregisterClass(g_szBlurHandler, hDllInstance);
 	UnregisterClass(g_szMsgHandler, hDllInstance);
