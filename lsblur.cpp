@@ -72,8 +72,16 @@ void quitModule(HINSTANCE hDllInstance)
 	// Erase the BlurMap
 	g_BlurMap.clear();
 
-	// Destroy message handling windows
-	DestroyWindow(g_hwndMessageHandler);
+	if (g_hwndMessageHandler)
+	{
+		// Unregister for LiteStep messages
+		SendMessage(GetLitestepWnd(), LM_UNREGISTERMESSAGE, (WPARAM)g_hwndMessageHandler, (LPARAM)g_lsMessages);
+
+		// Destroy message handling windows
+		DestroyWindow(g_hwndMessageHandler);
+
+		g_hwndMessageHandler = NULL;
+	}
 
 	// Unregister window classes
 	UnregisterClass(g_szBlurHandler, hDllInstance);
@@ -88,9 +96,9 @@ void quitModule(HINSTANCE hDllInstance)
 //
 bool CreateMessageHandlers(HINSTANCE hInst)
 {
-	WNDCLASSEX wc;
-	ZeroMemory(&wc, sizeof(WNDCLASSEX));
+	WNDCLASSEX wc = {0};
 	wc.cbSize = sizeof(WNDCLASSEX);
+	wc.style = CS_NOCLOSE;
 	wc.lpfnWndProc = MessageHandlerProc;
 	wc.hInstance = hInst;
 	wc.lpszClassName = g_szMsgHandler;
