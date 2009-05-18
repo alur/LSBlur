@@ -218,10 +218,6 @@ bool ParseBlurLine(const char* szLine, CBitmapEx* bmpWallpaper)
 
 			// Look for the name in the BlurMap
 			BlurMap::iterator iter = ::g_BlurMap.find(szName);
-			if (iter != g_BlurMap.end())
-			{
-				return false; // The BlurArea already exists
-			}
 
 			// Get the X position
 			GetToken(pszNext, szToken, &pszNext, false);
@@ -242,10 +238,21 @@ bool ParseBlurLine(const char* szLine, CBitmapEx* bmpWallpaper)
 			// Get the number of iterations
 			GetToken(pszNext, szToken, &pszNext, false);
 			Itterations = atoi(szToken);
-
-			// Create the blurarea and insert it into the BlurMap
-			BlurArea* blur = new BlurArea(X, Y, Width, Height, bmpWallpaper, szName, Itterations);
-			g_BlurMap.insert(BlurMap::value_type(szName, blur));
+			
+			if (iter != g_BlurMap.end())
+			{
+				// The BlurArea already exists, so just update it
+				iter->second->Move(X, Y);
+				iter->second->Resize(Width, Height);
+				iter->second->SetItterations(Itterations);
+				iter->second->UpdateBackground(bmpWallpaper);
+			}
+			else
+			{
+				// Create the blurarea and insert it into the BlurMap
+				BlurArea* blur = new BlurArea(X, Y, Width, Height, bmpWallpaper, szName, Itterations);
+				g_BlurMap.insert(BlurMap::value_type(szName, blur));
+			}
 
 			bReturn = true; // Everything went well
 		}
@@ -268,7 +275,8 @@ LRESULT WINAPI MessageHandlerProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 	{
 		case LM_REFRESH:
 		{
-			break;
+			ReadConfig();
+			return 0;
 		}
 		case LM_GETREVID:
 		{

@@ -30,12 +30,55 @@ BlurArea::BlurArea(UINT X, UINT Y, UINT Width, UINT Height, CBitmapEx* bmpWallpa
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 //
-// ~BlurArea() - Destructor
+// ~BlurArea - Destructor
 //
 BlurArea::~BlurArea()
 {
 	DestroyWindow(m_Window);
 	delete m_BitMapHandler;
+}
+
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+//
+// Move - Moves the BlurArea
+//
+void BlurArea::Move(UINT X, UINT Y, CBitmapEx* bmpWallpaper)
+{
+	m_X = X;
+	m_Y = Y;
+	if (bmpWallpaper)
+	{
+		UpdateBackground(bmpWallpaper);
+	}
+	SetWindowPos(m_Window, HWND_BOTTOM, X, Y, 0, 0, SWP_NOACTIVATE | SWP_NOSIZE);
+}
+
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+//
+// Resize - Resizes the BlurArea
+//
+void BlurArea::Resize(UINT Width, UINT Height, CBitmapEx* bmpWallpaper)
+{
+	m_Width = Width;
+	m_Height = Height;
+	if (bmpWallpaper)
+	{
+		UpdateBackground(bmpWallpaper);
+	}
+	SetWindowPos(m_Window, HWND_BOTTOM, 0, 0, Width, Height, SWP_NOACTIVATE | SWP_NOMOVE);
+}
+
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+//
+// SetItterations - Changes the number of itterations to do
+//
+void BlurArea::SetItterations(UINT Itterations, CBitmapEx* bmpWallpaper)
+{
+	m_Itterations = Itterations;
+	if (bmpWallpaper)
+	{
+		UpdateBackground(bmpWallpaper);
+	}
 }
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-

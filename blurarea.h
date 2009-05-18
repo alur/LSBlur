@@ -24,6 +24,9 @@ public:
 	// Functions
 	void UpdateBackground(CBitmapEx* bmpWallpaper);
 	void Draw(HDC hdc);
+	void Move(UINT X, UINT Y, CBitmapEx* bmpWallpaper = NULL);
+	void Resize(UINT Width, UINT Height, CBitmapEx* bmpWallpaper = NULL);
+	void SetItterations(UINT Itterations, CBitmapEx* bmpWallpaper = NULL);
 
 	// Variables
 	char m_szName[MAX_PATH];
