@@ -74,7 +74,6 @@ void quitModule(HINSTANCE hDllInstance)
 
 	// Destroy message handling windows
 	DestroyWindow(g_hwndMessageHandler);
-	DestroyWindow(g_hwndBlurHandler);
 
 	// Unregister window classes
 	UnregisterClass(g_szBlurHandler, hDllInstance);
@@ -110,11 +109,6 @@ bool CreateMessageHandlers(HINSTANCE hInst)
 
 	if (!g_hwndMessageHandler)
 		return false; // Failed to create message handler window
-
-	g_hwndBlurHandler = CreateWindowEx(WS_EX_TOOLWINDOW, g_szBlurHandler, 0, WS_POPUP, 0, 0, 0, 0, 0, 0, hInst, 0);
-
-	if (!g_hwndMessageHandler)
-		return false; // Failed to create blur handler window
 
 	// Register with LiteStep to receive LM_ messages
 	SendMessage(GetLitestepWnd(), LM_REGISTERMESSAGE, (WPARAM)g_hwndMessageHandler, (LPARAM)g_lsMessages);
