@@ -41,7 +41,6 @@ void BangBlur(HWND hWnd, LPCSTR pszArgs);
 
 // Variables
 HWND g_hwndMessageHandler;
-HWND g_hwndBlurHandler;
 HINSTANCE g_hInstance;
 bool g_bStoreWallpaper;
 BlurMap g_BlurMap;
