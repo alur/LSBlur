@@ -142,6 +142,8 @@ CBitmapEx* GetWallpaper()
 	// get screen resolution for bitmap's width and height
 	int nWidth = GetSystemMetrics(SM_CXVIRTUALSCREEN);
 	int nHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+	int x = GetSystemMetrics(SM_XVIRTUALSCREEN);
+	int y = GetSystemMetrics(SM_YVIRTUALSCREEN);
 
 	// create a bitmap compatible with the screen DC
 	HBITMAP hBitmap = CreateCompatibleBitmap(hScrDC, nWidth, nHeight);
@@ -150,14 +152,14 @@ CBitmapEx* GetWallpaper()
 	HBITMAP hOldBitmap = (HBITMAP)SelectObject(hMemDC, hBitmap);
 
 	// create the clipping region in the memory DC
-	HRGN hRegion = CreateRectRgn(0, 0, nWidth, nHeight);
+	HRGN hRegion = CreateRectRgn(x, y, nWidth + x, nHeight + y);
 	SelectClipRgn(hScrDC, hRegion);
 
 	// paint the desktop pattern to the memory DC
 	PaintDesktop(hScrDC);
 
 	// blitting desktop pattern to the memory DC
-	BitBlt(hMemDC, 0, 0, nWidth, nHeight, hScrDC, 0, 0, SRCCOPY);
+	BitBlt(hMemDC, 0, 0, nWidth, nHeight, hScrDC, x, y, SRCCOPY);
 
 	// update all the windows
 	InvalidateRect(NULL, NULL, TRUE);
