@@ -2,7 +2,7 @@
 
 #include <string>
 #include <map>
-#include <aggressiveoptimize.h>
+//#include <aggressiveoptimize.h>
 #include "blurarea.h"
 #include "utility.h"
 #include "shlwapi.h"
@@ -41,6 +41,7 @@ void BangBlur(HWND hWnd, LPCSTR pszArgs);
 
 // Variables
 HWND g_hwndMessageHandler;
+HWND g_hwndDesktop;
 HINSTANCE g_hInstance;
 bool g_bStoreWallpaper;
 BlurMap g_BlurMap;

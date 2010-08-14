@@ -13,6 +13,7 @@ extern const DWORD g_dwExStyle;
 extern const DWORD g_dwStyle;
 extern const char g_szBlurHandler[];
 extern HWND g_hwndMessageHandler;
+extern HWND g_hwndDesktop;
 
 class BlurArea
 {
