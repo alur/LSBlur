@@ -133,48 +133,46 @@ bool CreateMessageHandlers(HINSTANCE hInst)
 //
 CBitmapEx* GetWallpaper()
 {
-	// Get the path to the wallpaper
-	char szWallpaperPath[MAX_LINE_LENGTH] = { 0 };
-	DWORD dwSize = sizeof(szWallpaperPath), dwType = REG_SZ;
-	SHGetValue(HKEY_CURRENT_USER, "Control Panel\\Desktop", "Wallpaper", &dwType, &szWallpaperPath, &dwSize);
+	// create a DC for the screen and create
+	// a compatible memory DC to screen DC
+	// the return value of CreateDC() is the handle to a DC for the specified device
+	HDC hScrDC = CreateDC("DISPLAY", NULL, NULL, NULL);
+	HDC hMemDC = CreateCompatibleDC(hScrDC);
 
-	// Get whether or not to tile the wallpaper
-	char szTemp[32];
-	dwSize = sizeof(szTemp);
-	SHGetValue(HKEY_CURRENT_USER, "Control Panel\\Desktop", "TileWallpaper", &dwType, &szTemp, &dwSize);
-	bool bTileWallpaper = atoi(szTemp) ? true : false;
+	// get screen resolution for bitmap's width and height
+	int nWidth = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+	int nHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN);
 
-	// Get whether or not to stretch the wallpaper
-	SHGetValue(HKEY_CURRENT_USER, "Control Panel\\Desktop", "WallpaperStyle", &dwType, &szTemp, &dwSize);
-	bool bStretchWallpaper = (atoi(szTemp) == 2) ? true : false;
+	// create a bitmap compatible with the screen DC
+	HBITMAP hBitmap = CreateCompatibleBitmap(hScrDC, nWidth, nHeight);
 
-	// Use GDI+ to parse the file
-	WCHAR wszWallpaperPath[MAX_LINE_LENGTH];
-	MultiByteToWideChar (CP_ACP, 0, szWallpaperPath, -1, wszWallpaperPath, MAX_LINE_LENGTH);
-	Gdiplus::Bitmap* bm = new Gdiplus::Bitmap(wszWallpaperPath);
+	// select new bitmap into memory DC as a drawing surface
+	HBITMAP hOldBitmap = (HBITMAP)SelectObject(hMemDC, hBitmap);
 
-	// Convert the GDI+ format to a HBITMAP
-	HBITMAP bmp;
-	Gdiplus::Color clr(0xFF,0xFF,0xFF); 
-	bm->GetHBITMAP(clr, &bmp);
+	// create the clipping region in the memory DC
+	HRGN hRegion = CreateRectRgn(0, 0, nWidth, nHeight);
+	SelectClipRgn(hScrDC, hRegion);
+
+	// paint the desktop pattern to the memory DC
+	PaintDesktop(hScrDC);
+
+	// blitting desktop pattern to the memory DC
+	BitBlt(hMemDC, 0, 0, nWidth, nHeight, hScrDC, 0, 0, SRCCOPY);
+
+	// update all the windows
+	//InvalidateRect(NULL, NULL, TRUE);
+
+	// select old bitmap back into memory DC (restore settings) and get handle to
+	// bitmap of the wallpaper
+	hBitmap = (HBITMAP)SelectObject(hMemDC, hOldBitmap);
+
+	// clean up before exit the function
+	DeleteDC(hScrDC);
+	DeleteDC(hMemDC);
 
 	// Load the HBITMAP into the CBitmapEx class :)
 	CBitmapEx* bmpWallpaper = new CBitmapEx();
-	bmpWallpaper->Load(bmp);
-
-	// TODO::Support center & tiling
-	if (bStretchWallpaper) // Stretch
-	{
-		bmpWallpaper->Scale2(GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
-	}
-	else if (bTileWallpaper) // Tile
-	{
-	
-	}
-	else // Center
-	{
-		
-	}
+	bmpWallpaper->Load(hBitmap);
 
 	return bmpWallpaper;
 }
