@@ -91,7 +91,7 @@ void BlurArea::UpdateBackground(CBitmapEx* bmpWallpaper)
 	m_BitMapHandler->Create(bmpWallpaper);
 	
 	// Get the correct part of the wallpaper
-	m_BitMapHandler->Crop(m_X, m_Y, m_Width, m_Height);
+	m_BitMapHandler->Crop(m_X - GetSystemMetrics(SM_XVIRTUALSCREEN), m_Y - GetSystemMetrics(SM_YVIRTUALSCREEN), m_Width, m_Height);
 	
 	// Apply blur
 	for (UINT i = 0; i < m_Itterations; i++)
