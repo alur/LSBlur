@@ -2,6 +2,8 @@
 
 #include <string>
 #include <map>
+#include <Windows.h>
+#include <gdiplus.h>
 //#include <aggressiveoptimize.h>
 #include "blurarea.h"
 #include "utility.h"

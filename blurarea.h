@@ -1,6 +1,5 @@
 #pragma once
 
-#define WIN32_LEAN_AND_MEAN
 #include "lsapi.h"
 #define STRSAFE_NO_DEPRECATE
 #include <strsafe.h>

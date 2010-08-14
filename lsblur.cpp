@@ -148,9 +148,19 @@ CBitmapEx* GetWallpaper()
 	SHGetValue(HKEY_CURRENT_USER, "Control Panel\\Desktop", "WallpaperStyle", &dwType, &szTemp, &dwSize);
 	bool bStretchWallpaper = (atoi(szTemp) == 2) ? true : false;
 
-	// Load the wallpaper
+	// Use GDI+ to parse the file
+	WCHAR wszWallpaperPath[MAX_LINE_LENGTH];
+	MultiByteToWideChar (CP_ACP, 0, szWallpaperPath, -1, wszWallpaperPath, MAX_LINE_LENGTH);
+	Gdiplus::Bitmap* bm = new Gdiplus::Bitmap(wszWallpaperPath);
+
+	// Convert the GDI+ format to a HBITMAP
+	HBITMAP bmp;
+	Gdiplus::Color clr(0xFF,0xFF,0xFF); 
+	bm->GetHBITMAP(clr, &bmp);
+
+	// Load the HBITMAP into the CBitmapEx class :)
 	CBitmapEx* bmpWallpaper = new CBitmapEx();
-	bmpWallpaper->Load(szWallpaperPath);
+	bmpWallpaper->Load(bmp);
 
 	// TODO::Support center & tiling
 	if (bStretchWallpaper) // Stretch
@@ -332,7 +342,7 @@ LRESULT WINAPI BlurHandlerProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 			EndPaint(hWnd, &ps);
 			return 0;
 		}
-		/*case WM_WINDOWPOSCHANGING:
+		case WM_WINDOWPOSCHANGING:
 		{
 			WINDOWPOS *c = (WINDOWPOS*)lParam;
 			c->hwnd = hWnd;
@@ -341,7 +351,7 @@ LRESULT WINAPI BlurHandlerProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 			//c->flags |= SWP_NOACTIVATE | SWP_NOSENDCHANGING;
 			c->flags |= SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOMOVE;
 			return 0;
-		}*/
+		}
 	}
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
