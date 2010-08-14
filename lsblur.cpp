@@ -160,7 +160,7 @@ CBitmapEx* GetWallpaper()
 	BitBlt(hMemDC, 0, 0, nWidth, nHeight, hScrDC, 0, 0, SRCCOPY);
 
 	// update all the windows
-	//InvalidateRect(NULL, NULL, TRUE);
+	InvalidateRect(NULL, NULL, TRUE);
 
 	// select old bitmap back into memory DC (restore settings) and get handle to
 	// bitmap of the wallpaper
