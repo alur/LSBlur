@@ -26,7 +26,7 @@ int initModuleEx(HWND /* hwndParent */, HINSTANCE hDllInstance, LPCSTR /* szPath
 	g_hInstance = hDllInstance;
 
 	// Store wallpaper in memory instead of generating a new copy whenever a !Blur line is executed
-	g_bStoreWallpaper = GetRCBool("BlurStoreWallpaper", FALSE) ? true : false;
+	g_bStoreWallpaper = (GetRCBoolDef("BlurStoreWallpaper", FALSE) != FALSE);
 
 	// Get the parent window 
 	g_hwndDesktop = FindWindow("DesktopBackgroundClass", NULL);
@@ -249,7 +249,7 @@ bool ParseBlurLine(LPCSTR szLine, CBitmapEx* bmpWallpaper)
 {
 	char szName[MAX_LINE_LENGTH], szX[MAX_LINE_LENGTH], szY[MAX_LINE_LENGTH];
 	char szHeight[MAX_LINE_LENGTH], szWidth[MAX_LINE_LENGTH], szIterations[MAX_LINE_LENGTH];
-	char* szTokens[6] = {szName, szX, szY, szHeight, szWidth, szIterations};
+	char* szTokens[6] = {szName, szX, szY, szWidth, szHeight, szIterations};
 
 	int X, Y, Width, Height, Itterations;
 	bool bReturn = false;
