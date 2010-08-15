@@ -26,20 +26,31 @@ int initModuleEx(HWND /* hwndParent */, HINSTANCE hDllInstance, LPCSTR /* szPath
 	g_hInstance = hDllInstance;
 
 	// Store wallpaper in memory instead of generating a new copy whenever a !Blur line is executed
-	g_bStoreWallpaper = GetRCBool("BlurStoreWallpaper", false) ? true : false;
+	g_bStoreWallpaper = GetRCBool("BlurStoreWallpaper", FALSE) ? true : false;
 
-	//
+	// Get the parent window 
 	g_hwndDesktop = FindWindow("DesktopBackgroundClass", NULL);
+	if (!g_hwndDesktop)
+	{
+		return 1;
+	}
 
 	// Create window classes and the main window
 	if (!CreateMessageHandlers(hDllInstance))
+	{
 		return 1;
+	}
+
+	// Store the wallpaper
+	if (g_bStoreWallpaper)
+		g_pWallpaper = GetWallpaper();
 
 	// Load *Blur lines
 	ReadConfig();
 
 	// Register for !Blur bangs
 	AddBangCommand("!Blur", BangBlur);
+	AddBangCommand("!RemoveBlur", BangRemoveBlur);
 
 	return 0; // Initialized succesfully
 }
@@ -50,9 +61,24 @@ int initModuleEx(HWND /* hwndParent */, HINSTANCE hDllInstance, LPCSTR /* szPath
 //
 void BangBlur(HWND, LPCSTR pszArgs)
 {
-	CBitmapEx* bmpWallpaper = GetWallpaper();
+	CBitmapEx* bmpWallpaper = g_bStoreWallpaper ? g_pWallpaper : GetWallpaper();
 	ParseBlurLine(pszArgs, bmpWallpaper);
-	delete bmpWallpaper;
+	if (!g_pWallpaper)
+		delete bmpWallpaper;
+}
+
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+//
+// BangRemoveBlur
+//
+void BangRemoveBlur(HWND, LPCSTR pszArgs)
+{
+	BlurMap::iterator iter = g_BlurMap.find(pszArgs);
+	if (iter != g_BlurMap.end())
+	{
+		delete iter->second;
+		g_BlurMap.erase(iter);
+	}
 }
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -65,6 +91,7 @@ void quitModule(HINSTANCE hDllInstance)
 {
 	// Unregister the !Blur bang
 	RemoveBangCommand("!Blur");
+	RemoveBangCommand("!RemoveBlur");
 
 	// Delete all blur areas
 	for (BlurMap::iterator iter = g_BlurMap.begin(); iter != g_BlurMap.end(); ++iter)
@@ -85,6 +112,10 @@ void quitModule(HINSTANCE hDllInstance)
 
 		g_hwndMessageHandler = NULL;
 	}
+
+	// Clear the wallpaper if necesary
+	if (g_pWallpaper)
+		delete g_pWallpaper;
 
 	// Unregister window classes
 	UnregisterClass(g_szBlurHandler, hDllInstance);
@@ -193,15 +224,17 @@ void ReadConfig()
 
 	char szLine[MAX_LINE_LENGTH], szBlur[MAX_BANGCOMMAND];
 	LPCSTR pszLine;
-	CBitmapEx* bmpWallpaper = GetWallpaper();
+
+	CBitmapEx* bmpWallpaper = g_bStoreWallpaper ? g_pWallpaper : GetWallpaper();
 
 	while (LCReadNextConfig(f, "*Blur", szLine, sizeof(szLine)))
 	{
 		GetToken(szLine, szBlur, &pszLine, false); // Drop the *Blur
 		ParseBlurLine(pszLine, bmpWallpaper);
 	}
-
-	delete bmpWallpaper;
+	
+	if (!g_bStoreWallpaper)
+		delete bmpWallpaper;
 
 	LCClose(f);
 }
@@ -212,46 +245,31 @@ void ReadConfig()
 //
 // Returns true on success
 //
-bool ParseBlurLine(const char* szLine, CBitmapEx* bmpWallpaper)
+bool ParseBlurLine(LPCSTR szLine, CBitmapEx* bmpWallpaper)
 {
-	LPCSTR pszNext = szLine;
-	char szToken[MAX_LINE_LENGTH], szName[MAX_BANGCOMMAND];
+	char szName[MAX_LINE_LENGTH], szX[MAX_LINE_LENGTH], szY[MAX_LINE_LENGTH];
+	char szHeight[MAX_LINE_LENGTH], szWidth[MAX_LINE_LENGTH], szIterations[MAX_LINE_LENGTH];
+	char* szTokens[6] = {szName, szX, szY, szHeight, szWidth, szIterations};
+
 	int X, Y, Width, Height, Itterations;
 	bool bReturn = false;
 
+	// Necesary to check if the iterations were omitted.
+	szIterations[0] = 0;
+
 	if (szLine != NULL)
 	{
-		try
+		// *Blur/!Blur Name X Y Width Height Repetitions
+		if (LCTokenize(szLine, szTokens, 6, NULL) > 4)
 		{
-			// *Blur/!Blur Name X Y Width Height Repetitions
-
-			// Get the name
-			GetToken(pszNext, szToken, &pszNext, false);
-			memcpy(szName, szToken, sizeof(szName));
-
-			// Look for the name in the BlurMap
-			BlurMap::iterator iter = ::g_BlurMap.find(szName);
-
-			// Get the X position
-			GetToken(pszNext, szToken, &pszNext, false);
-			X = atoi(szToken);
-
-			// Get the Y positions
-			GetToken(pszNext, szToken, &pszNext, false);
-			Y = atoi(szToken);
-
-			// Get the width
-			GetToken(pszNext, szToken, &pszNext, false);
-			Width = atoi(szToken);
-
-			// Get the height
-			GetToken(pszNext, szToken, &pszNext, false);
-			Height = atoi(szToken);
-
-			// Get the number of iterations
-			GetToken(pszNext, szToken, &pszNext, false);
-			Itterations = atoi(szToken);
+			X = atoi(szX);
+			Y = atoi(szY);
+			Width = atoi(szWidth);
+			Height = atoi(szHeight);
+			Itterations = atoi(szIterations);
 			
+			// Look for the name in the BlurMap
+			BlurMap::iterator iter = g_BlurMap.find(szName);
 			if (iter != g_BlurMap.end())
 			{
 				// The BlurArea already exists, so just update it
@@ -266,12 +284,8 @@ bool ParseBlurLine(const char* szLine, CBitmapEx* bmpWallpaper)
 				BlurArea* blur = new BlurArea(X, Y, Width, Height, bmpWallpaper, szName, Itterations);
 				g_BlurMap.insert(BlurMap::value_type(szName, blur));
 			}
-
+			
 			bReturn = true; // Everything went well
-		}
-		catch (...)
-		{
-			// TODO::Show error message
 		}
 	}
 
@@ -310,8 +324,8 @@ LRESULT WINAPI MessageHandlerProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 //
 LRESULT WINAPI BlurHandlerProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	BlurArea* blur = (BlurArea*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
-	if (!blur) // Not sure why this would happen, but no need to bother with it.
+	BlurArea* pBlur = (BlurArea*)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+	if (!pBlur) // Not sure why this would happen, but no need to bother with it.
 		return DefWindowProc(hWnd, uMsg, wParam, lParam);
 
 	switch(uMsg)
@@ -338,7 +352,7 @@ LRESULT WINAPI BlurHandlerProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 		{
 			PAINTSTRUCT ps;
 			HDC hDC = BeginPaint(hWnd, &ps);
-			blur->Draw(hDC);
+			pBlur->Draw(hDC);
 			EndPaint(hWnd, &ps);
 			return 0;
 		}

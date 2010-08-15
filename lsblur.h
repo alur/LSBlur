@@ -34,13 +34,15 @@ LRESULT WINAPI MessageHandlerProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 LRESULT WINAPI BlurHandlerProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void AddBlur(RECT rRect);
 void Experimenting();
-bool ParseBlurLine(const char* szLine, CBitmapEx* bmpWallpaper);
+bool ParseBlurLine(LPCSTR szLine, CBitmapEx* bmpWallpaper);
 CBitmapEx* GetWallpaper();
 void BangBlur(HWND hWnd, LPCSTR pszArgs);
+void BangRemoveBlur(HWND hWnd, LPCSTR pszArgs);
 
 // Variables
-HWND g_hwndMessageHandler;
-HWND g_hwndDesktop;
-HINSTANCE g_hInstance;
+HWND g_hwndMessageHandler = NULL;
+HWND g_hwndDesktop = NULL;
+HINSTANCE g_hInstance = NULL;
 bool g_bStoreWallpaper;
 BlurMap g_BlurMap;
+CBitmapEx* g_pWallpaper = NULL;
