@@ -314,6 +314,21 @@ LRESULT WINAPI MessageHandlerProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 			lParam = NULL;
 			return 0;
 		}
+		case WM_SETTINGCHANGE:
+		{
+			if (wParam == SPI_SETDESKWALLPAPER)
+			{
+				CBitmapEx* bmpWallpaper = g_bStoreWallpaper ? g_pWallpaper : GetWallpaper();
+				for (BlurMap::iterator iter = g_BlurMap.begin(); iter != g_BlurMap.end(); ++iter)
+				{
+					iter->second->UpdateBackground(bmpWallpaper);
+				}
+				if (!g_bStoreWallpaper)
+					delete bmpWallpaper;
+				return 0;
+			}
+			break;
+		}
 	}
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
