@@ -41,6 +41,14 @@ int initModuleEx(HWND /* hwndParent */, HINSTANCE hDllInstance, LPCSTR /* szPath
 		return 1;
 	}
 
+	// Start GDI+
+	Gdiplus::GdiplusStartupInput gdistartup;
+	gdistartup.GdiplusVersion = 1;
+	gdistartup.DebugEventCallback = NULL;
+	gdistartup.SuppressBackgroundThread = FALSE;
+	gdistartup.SuppressExternalCodecs = FALSE;
+	Gdiplus::GdiplusStartup(&gdiToken, &gdistartup, NULL);
+
 	// Store the wallpaper
 	if (g_bStoreWallpaper)
 		g_pWallpaper = GetWallpaper();
@@ -117,6 +125,9 @@ void quitModule(HINSTANCE hDllInstance)
 	if (g_pWallpaper)
 		delete g_pWallpaper;
 
+	// Shutdown GDI+
+	Gdiplus::GdiplusShutdown(gdiToken);
+
 	// Unregister window classes
 	UnregisterClass(g_szBlurHandler, hDllInstance);
 	UnregisterClass(g_szMsgHandler, hDllInstance);
@@ -160,53 +171,225 @@ bool CreateMessageHandlers(HINSTANCE hInst)
 
 //=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 //
+// UpdateMonitorInfo
+//
+// Updates the information about all monitors
+//
+void UpdateMonitorInfo()
+{
+	g_Monitors.clear();
+	
+	MonitorInfo mInfo;
+	mInfo.Left = GetSystemMetrics(SM_XVIRTUALSCREEN);
+	mInfo.Top = GetSystemMetrics(SM_YVIRTUALSCREEN);
+	mInfo.ResX = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+	mInfo.ResY = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+
+	g_Monitors.push_back(mInfo);
+
+	EnumDisplayMonitors(NULL, NULL, SetMonitorVars, 0);
+}
+
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+//
+// SetMonitorVars
+//
+// Callback function for UpdateMonitorInfo
+//
+BOOL CALLBACK SetMonitorVars(HMONITOR hMonitor, HDC, LPRECT, LPARAM)
+{
+	MonitorInfo mInfo;
+	MONITORINFO mi;
+	mi.cbSize = sizeof(MONITORINFO);
+	GetMonitorInfo(hMonitor, &mi);
+
+	mInfo.Top = mi.rcMonitor.top;
+	mInfo.Left = mi.rcMonitor.left;
+	mInfo.ResY = mi.rcMonitor.bottom - mi.rcMonitor.top;
+	mInfo.ResX = mi.rcMonitor.right - mi.rcMonitor.left;
+
+	if ((mi.dwFlags & MONITORINFOF_PRIMARY) == MONITORINFOF_PRIMARY)
+	{
+		g_Monitors.insert(g_Monitors.begin()+1, mInfo);
+	}
+	else
+	{
+		g_Monitors.push_back(mInfo);
+	}
+
+	return TRUE;
+}
+
+//=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+//
 // GetWallpaper - Returns a reconstruction of the current wallpaper.
 //
 CBitmapEx* GetWallpaper()
 {
-	// create a DC for the screen and create
-	// a compatible memory DC to screen DC
-	// the return value of CreateDC() is the handle to a DC for the specified device
-	HDC hScrDC = CreateDC("DISPLAY", NULL, NULL, NULL);
-	HDC hMemDC = CreateCompatibleDC(hScrDC);
+	UpdateMonitorInfo(); // Update our information about the monitors
 
-	// get screen resolution for bitmap's width and height
-	int nWidth = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-	int nHeight = GetSystemMetrics(SM_CYVIRTUALSCREEN);
-	int x = GetSystemMetrics(SM_XVIRTUALSCREEN);
-	int y = GetSystemMetrics(SM_YVIRTUALSCREEN);
+	// Get the path to the wallpaper
+	char szWallpaperPath[MAX_LINE_LENGTH];
+	DWORD dwSize = sizeof(szWallpaperPath), dwType = REG_SZ;
+	SHGetValue(HKEY_CURRENT_USER, "Control Panel\\Desktop", "Wallpaper", &dwType, &szWallpaperPath, &dwSize);
 
-	// create a bitmap compatible with the screen DC
-	HBITMAP hBitmap = CreateCompatibleBitmap(hScrDC, nWidth, nHeight);
+	// Get whether or not to tile the wallpaper
+	char szTemp[32];
+	dwSize = sizeof(szTemp);
+	SHGetValue(HKEY_CURRENT_USER, "Control Panel\\Desktop", "TileWallpaper", &dwType, &szTemp, &dwSize);
+	bool bTileWallpaper = atoi(szTemp) ? true : false;
 
-	// select new bitmap into memory DC as a drawing surface
-	HBITMAP hOldBitmap = (HBITMAP)SelectObject(hMemDC, hBitmap);
+	// Get whether or not to stretch the wallpaper
+	dwSize = sizeof(szTemp);
+	SHGetValue(HKEY_CURRENT_USER, "Control Panel\\Desktop", "WallpaperStyle", &dwType, &szTemp, &dwSize);
+	int iWallpaperStyle = atoi(szTemp);
 
-	// create the clipping region in the memory DC
-	HRGN hRegion = CreateRectRgn(x, y, nWidth + x, nHeight + y);
-	SelectClipRgn(hScrDC, hRegion);
+	// Create a HBITMAP the size of the virtual screen
+	HDC hdcScreen = CreateDC("DISPLAY", NULL, NULL, NULL);
+	HDC hdcDesktop = CreateCompatibleDC(hdcScreen);
+	HBITMAP hBitmap = CreateCompatibleBitmap(hdcScreen, g_Monitors.at(0).ResX, g_Monitors.at(0).ResY);
+	HBITMAP hOldBitmap = (HBITMAP)SelectObject(hdcDesktop, hBitmap);
 
-	// paint the desktop pattern to the memory DC
-	PaintDesktop(hScrDC);
+	// Fill the bitmap with the background color
+	HRGN hRegion = CreateRectRgn(0, 0, g_Monitors.at(0).ResX, g_Monitors.at(0).ResY);
+    SelectClipRgn(hdcScreen, hRegion);
+	FillRgn(hdcDesktop, hRegion, GetSysColorBrush(COLOR_DESKTOP));
 
-	// blitting desktop pattern to the memory DC
-	BitBlt(hMemDC, 0, 0, nWidth, nHeight, hScrDC, x, y, SRCCOPY);
+	// Use GDI+ to parse the file
+	WCHAR wszWallpaperPath[MAX_LINE_LENGTH];
+	MultiByteToWideChar (CP_ACP, 0, szWallpaperPath, -1, wszWallpaperPath, MAX_LINE_LENGTH);
+	Gdiplus::Bitmap* bm = Gdiplus::Bitmap::FromFile(wszWallpaperPath);
 
-	// update all the windows
-	InvalidateRect(NULL, NULL, TRUE);
+	if (bm)
+	{
+		// Convert the GDI+ format to a HBITMAP
+		HBITMAP hbmWallpaper;
+		Gdiplus::Color clr(0xFF,0xFF,0xFF); 
+		bm->GetHBITMAP(clr, &hbmWallpaper);
 
-	// select old bitmap back into memory DC (restore settings) and get handle to
-	// bitmap of the wallpaper
-	hBitmap = (HBITMAP)SelectObject(hMemDC, hOldBitmap);
+		if(hbmWallpaper)
+		{
+			BITMAP bm;
+			GetObject(hbmWallpaper, sizeof(BITMAP), &bm);
 
-	// clean up before exit the function
-	DeleteDC(hScrDC);
-	DeleteDC(hMemDC);
+			int cxWallpaper = bm.bmWidth;
+			int cyWallpaper = bm.bmHeight;
 
-	// Load the HBITMAP into the CBitmapEx class :)
+			HDC hdcWallpaper = CreateCompatibleDC(hdcScreen);
+			hbmWallpaper = (HBITMAP) SelectObject(hdcWallpaper, hbmWallpaper);
+			SetStretchBltMode(hdcWallpaper, STRETCH_DELETESCANS);
+
+			if (bTileWallpaper) // Tile
+			{
+				// The x point where we should start tiling the image
+				int xInitial = -g_Monitors.at(0).Left + (int)floor((float)g_Monitors.at(0).Left/cxWallpaper)*cxWallpaper;
+				// The y point where we should start tiling the image
+				int yInitial = -g_Monitors.at(0).Top + (int)floor((float)g_Monitors.at(0).Top/cyWallpaper)*cyWallpaper;
+				for (int x = xInitial; x < g_Monitors.at(0).ResX - g_Monitors.at(0).Left; x += cxWallpaper)
+					for (int y = yInitial; y < g_Monitors.at(0).ResY - g_Monitors.at(0).Top; y += cyWallpaper)
+						BitBlt(hdcDesktop, x, y, cxWallpaper, cyWallpaper, hdcWallpaper, 0, 0, SRCCOPY);
+			}
+			else // Some type of stretching
+			{
+				// Work out the dimensions the wallpaper should be stretched to
+				int WallpaperResX, WallpaperResY;
+				double scaleX, scaleY;
+				switch (iWallpaperStyle)
+				{
+				case 2: // Stretch
+					WallpaperResX = g_Monitors.at(1).ResX;
+					WallpaperResY = g_Monitors.at(1).ResY;
+					break;
+				case 6: // Fit
+					scaleX = (double)g_Monitors.at(1).ResX/cxWallpaper;
+					scaleY = (double)g_Monitors.at(1).ResY/cyWallpaper;
+					if (scaleX > scaleY)
+					{
+						WallpaperResY = g_Monitors.at(1).ResY;
+						WallpaperResX = (int)(scaleY*cxWallpaper);
+					}
+					else
+					{
+						WallpaperResY = (int)(scaleX*cyWallpaper);
+						WallpaperResX = g_Monitors.at(1).ResX;
+					}
+					break;
+				case 10: // Fill
+					scaleX = (double)g_Monitors.at(1).ResX/cxWallpaper;	
+					scaleY = (double)g_Monitors.at(1).ResY/cyWallpaper;
+					if (scaleX < scaleY)
+					{
+						WallpaperResY = g_Monitors.at(1).ResY;
+						WallpaperResX = (int)(scaleY*cxWallpaper);
+					}
+					else
+					{
+						WallpaperResY = (int)(scaleX*cyWallpaper);
+						WallpaperResX = g_Monitors.at(1).ResX;
+					}
+					break;
+				default: // Center (actually 0), but this way we can fail graciously if the value is invalid
+					WallpaperResX = cxWallpaper;
+					WallpaperResY = cyWallpaper;
+					break;
+				}
+
+				// Stretch the wallpaper as necesary
+				HDC hdcStretchedWallpaper = CreateCompatibleDC(hdcScreen);
+				HBITMAP hbmStretchedWallpaper = CreateCompatibleBitmap(hdcScreen, WallpaperResX, WallpaperResY);
+				hbmStretchedWallpaper = (HBITMAP)SelectObject(hdcStretchedWallpaper, hbmStretchedWallpaper);
+				StretchBlt(hdcStretchedWallpaper, 0, 0, WallpaperResX, WallpaperResY, hdcWallpaper, 0, 0, cxWallpaper, cyWallpaper, SRCCOPY);
+
+				// Center the stretched wallpaper on all monitors
+				for (int i = 1; i < (int)g_Monitors.size(); i++)
+				{
+					// Work out X coordinates and width
+					int xsrc, xdest, width;
+					if (g_Monitors.at(i).ResX > WallpaperResX)
+					{
+						xdest = (g_Monitors.at(i).ResX - WallpaperResX)/2;
+						width = WallpaperResX;
+						xsrc = 0;
+					}
+					else
+					{
+						xdest = 0;
+						width = g_Monitors.at(i).ResX;
+						xsrc = (WallpaperResX - g_Monitors.at(i).ResX)/2;
+					}
+					xdest += g_Monitors.at(i).Left - g_Monitors.at(0).Left;
+
+					// Work out Y coordinates and height
+					int ysrc, ydest, height;
+					if (g_Monitors.at(i).ResY > WallpaperResY)
+					{
+						ydest = (g_Monitors.at(i).ResY - WallpaperResY)/2;
+						height = WallpaperResY;
+						ysrc = 0;
+					}
+					else
+					{
+						ydest = 0;
+						height = g_Monitors.at(i).ResY;
+						ysrc = (WallpaperResY - g_Monitors.at(i).ResY)/2;
+					}
+					ydest += g_Monitors.at(i).Top - g_Monitors.at(0).Top;
+
+					BitBlt(hdcDesktop, xdest, ydest, width, height, hdcStretchedWallpaper, xsrc, ysrc, SRCCOPY);
+				}
+				DeleteDC(hdcStretchedWallpaper);
+			}
+			DeleteDC(hdcWallpaper);
+		}
+	}
+
+	hBitmap = (HBITMAP)SelectObject(hdcDesktop, hOldBitmap);
+
+	DeleteDC(hdcScreen);
+	DeleteDC(hdcDesktop);
+
 	CBitmapEx* bmpWallpaper = new CBitmapEx();
 	bmpWallpaper->Load(hBitmap);
-
 	return bmpWallpaper;
 }
 

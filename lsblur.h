@@ -2,16 +2,26 @@
 
 #include <string>
 #include <map>
+#include <vector>
+#include <Windows.h>
+#include <GdiPlus.h>
 #include "blurarea.h"
 #include "utility.h"
 #include "shlwapi.h"
 
 class BlurArea;
 
+// Typedefs
 typedef std::map<std::string, BlurArea*, stringicmp> BlurMap;
+typedef struct MonitorInfo {
+	int Top;
+	int Left;
+	int ResX;
+	int ResY;
+} MonitorInfo;
 
 // Constants
-const char g_rcsRevision[]		= "0.1";
+const char g_rcsRevision[]		= "0.2";
 const char g_szAppName[]		= "LSBlur";
 const char g_szMsgHandler[]		= "LSBlurManager";
 const char g_szBlurHandler[]	= "Blur";
@@ -27,7 +37,7 @@ extern "C" {
     __declspec( dllexport ) void quitModule(HINSTANCE hDllInstance);
 }
 
-// Functions
+// Function Declarations
 void ReadConfig();
 bool CreateMessageHandlers(HINSTANCE hInst);
 LRESULT WINAPI MessageHandlerProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -38,6 +48,8 @@ bool ParseBlurLine(LPCSTR szLine, CBitmapEx* bmpWallpaper);
 CBitmapEx* GetWallpaper();
 void BangBlur(HWND hWnd, LPCSTR pszArgs);
 void BangRemoveBlur(HWND hWnd, LPCSTR pszArgs);
+void UpdateMonitorInfo();
+BOOL CALLBACK SetMonitorVars(HMONITOR hMonitor, HDC, LPRECT, LPARAM);
 
 // Variables
 HWND g_hwndMessageHandler = NULL;
@@ -46,3 +58,5 @@ HINSTANCE g_hInstance = NULL;
 bool g_bStoreWallpaper;
 BlurMap g_BlurMap;
 CBitmapEx* g_pWallpaper = NULL;
+std::vector<MonitorInfo> g_Monitors;
+ULONG_PTR gdiToken;

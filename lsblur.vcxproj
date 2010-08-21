@@ -64,7 +64,7 @@
     </ClCompile>
     <Link>
       <AdditionalOptions>/ignore:4254 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>lsapi.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>gdiplus.lib;lsapi.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
@@ -88,7 +88,7 @@
     </ClCompile>
     <Link>
       <AdditionalOptions>/ignore:4254 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>lsapi.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>gdiplus.lib;lsapi.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
