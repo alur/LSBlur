@@ -21,7 +21,7 @@ typedef struct MonitorInfo {
 } MonitorInfo;
 
 // Constants
-const char g_rcsRevision[]		= "0.2";
+const char g_rcsRevision[]		= "0.3";
 const char g_szAppName[]		= "LSBlur";
 const char g_szMsgHandler[]		= "LSBlurManager";
 const char g_szBlurHandler[]	= "Blur";
