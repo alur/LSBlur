@@ -269,16 +269,19 @@ CBitmapEx* GetWallpaper()
 
 		if(hbmWallpaper)
 		{
-			BITMAP bm;
-			GetObject(hbmWallpaper, sizeof(BITMAP), &bm);
+			BITMAP bm2;
+			GetObject(hbmWallpaper, sizeof(BITMAP), &bm2);
 
-			int cxWallpaper = bm.bmWidth;
-			int cyWallpaper = bm.bmHeight;
+			int cxWallpaper = bm2.bmWidth;
+			int cyWallpaper = bm2.bmHeight;
+
+			DeleteObject(&bm2);
 
 			HDC hdcWallpaper = CreateCompatibleDC(hdcScreen);
-			hbmWallpaper = (HBITMAP) SelectObject(hdcWallpaper, hbmWallpaper);
+			HBITMAP hbmOldWallpaper = (HBITMAP) SelectObject(hdcWallpaper, hbmWallpaper);
+			
 			SetStretchBltMode(hdcWallpaper, STRETCH_DELETESCANS);
-
+			
 			if (bTileWallpaper) // Tile
 			{
 				// The x point where we should start tiling the image
@@ -379,6 +382,9 @@ CBitmapEx* GetWallpaper()
 				}
 				DeleteDC(hdcStretchedWallpaper);
 			}
+
+			hbmWallpaper = (HBITMAP) SelectObject(hdcWallpaper, hbmOldWallpaper);
+			DeleteObject(hbmWallpaper);
 			DeleteDC(hdcWallpaper);
 		}
 	}
@@ -390,6 +396,7 @@ CBitmapEx* GetWallpaper()
 
 	CBitmapEx* bmpWallpaper = new CBitmapEx();
 	bmpWallpaper->Load(hBitmap);
+
 	return bmpWallpaper;
 }
 
