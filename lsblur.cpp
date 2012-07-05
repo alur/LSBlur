@@ -387,6 +387,7 @@ CBitmapEx* GetWallpaper()
 			DeleteObject(hbmWallpaper);
 			DeleteDC(hdcWallpaper);
 		}
+		delete bm;
 	}
 
 	hBitmap = (HBITMAP)SelectObject(hdcDesktop, hOldBitmap);
@@ -553,21 +554,16 @@ LRESULT WINAPI BlurHandlerProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 			// TODO::Forward these
 			break;
 		}
-		case WM_PAINT:
+		case WM_ERASEBKGND:
 		{
-			PAINTSTRUCT ps;
-			HDC hDC = BeginPaint(hWnd, &ps);
-			pBlur->Draw(hDC);
-			EndPaint(hWnd, &ps);
-			return 0;
+			pBlur->Draw((HDC)wParam);
+			return 1;
 		}
 		case WM_WINDOWPOSCHANGING:
 		{
 			WINDOWPOS *c = (WINDOWPOS*)lParam;
 			c->hwnd = hWnd;
 			c->hwndInsertAfter = HWND_BOTTOM;
-			//c->flags = c->flags & ~SWP_NOZORDER;
-			//c->flags |= SWP_NOACTIVATE | SWP_NOSENDCHANGING;
 			c->flags |= SWP_NOSIZE | SWP_NOACTIVATE | SWP_NOMOVE;
 			return 0;
 		}

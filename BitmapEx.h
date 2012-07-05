@@ -216,7 +216,7 @@ public:
 
 private:
 	// Private methods
-	float _ARG(float xa, float ya);
+	float _ARGa(float xa, float ya);
 	float _MOD(float x, float y, float z);
 	void _ConvertTo32Bpp();
 	void _ConvertTo24Bpp();

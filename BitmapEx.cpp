@@ -396,7 +396,7 @@ void CBitmapEx::Save(HBITMAP& hBitmap)
 	}
 }
 
-float CBitmapEx::_ARG(float xa, float ya)
+float CBitmapEx::_ARGa(float xa, float ya)
 {
 	float _arg = 0.0f;
 
@@ -12384,8 +12384,8 @@ _PIXEL CBitmapEx::_RGB2HSV(_PIXEL rgbPixel)
 	BYTE temp = (red + green + blue) / 3;
 	float xa = (green - red) / sqrt(2.0f);
 	float ya = (2*blue - red - green) / sqrt(6.0f);
-	float _hue = _ARG(xa, ya) * (180.0f / _PI) + 150.0f;
-	float _saturation = _ARG(temp, _MOD((float)(red-temp), (float)(green-temp), (float)(blue-temp))) * 100.0f / atan(sqrt(6.0f));
+	float _hue = _ARGa(xa, ya) * (180.0f / _PI) + 150.0f;
+	float _saturation = _ARGa(temp, _MOD((float)(red-temp), (float)(green-temp), (float)(blue-temp))) * 100.0f / atan(sqrt(6.0f));
 	float _value = (float)temp / 2.55f;
 	if ((_saturation == 0.0f) || (_value == 0.0f))
 		_hue = 0.0f;
